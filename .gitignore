@@ -1,0 +1,11 @@
+*.[oad]
+*.crf
+*.log
+*.cache
+*_log*
+obj
+bin
+packages
+*.suo
+*.user
+_ReSharper.*
