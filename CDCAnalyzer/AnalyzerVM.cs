@@ -18,6 +18,9 @@ namespace CDCAnalyzer
         DispatcherTimer timer;
         private UiCommand ButtonConnectCommand;
         private UiCommand ButtonClearCommand;
+        private UiCommand ButtonSelectFileCommand;
+
+        public bool ElementsEnabled { get; set; }
 
         public List<string> PortListVM
         {
@@ -78,14 +81,40 @@ namespace CDCAnalyzer
             {
                 if (analyzer.ConnectionState == true)
                 {
+                    ElementsEnabled = false;
+                    PropertyChanged(this, new PropertyChangedEventArgs("ElementsEnabled"));
                     return "Disconnect";
                 }
                 else
                 {
-                    return "Connect";
+                    ElementsEnabled = true;
+                    PropertyChanged(this, new PropertyChangedEventArgs("ElementsEnabled"));
+                    return "Connect";          
                 }
+                
             }
         }
+
+        public string FilePathVM
+        {
+            get
+            {
+                return analyzer.FilePath;
+            }
+            set
+            {
+                analyzer.FilePath = value;
+            }
+        }
+
+        public bool SaveFileEnabledVM
+        {
+            set
+            {
+                analyzer.SaveFileEnabled = value;
+            }
+        }
+
 
         public ICommand ButtonConnect_Click
         {
@@ -108,6 +137,18 @@ namespace CDCAnalyzer
                     ButtonClearCommand = new UiCommand((obj) => this.ClearRequest(obj));
                 }
                 return ButtonClearCommand;
+            }
+        }
+
+        public ICommand ButtonSelectFile_Click
+        {
+            get
+            {
+                if (ButtonSelectFileCommand == null)
+                {
+                    ButtonSelectFileCommand = new UiCommand(obj => this.SelectFileRequest(obj));
+                }
+                return ButtonSelectFileCommand;
             }
         }
 
@@ -150,6 +191,29 @@ namespace CDCAnalyzer
             analyzer.AverageSpeed = 0;
             analyzer.CurrentSpeed = 0;
             analyzer.ReceivedCnt = 0;
+        }
+
+        public void SelectFileRequest (object parameter)
+        {
+            Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
+
+            ofd.DefaultExt = ".txt";
+            ofd.Filter = "TXT Files (*.txt)|*.txt|All Files (*.*)|*.*";
+            ofd.InitialDirectory = @"C:\Users\User\Desktop\";
+            ofd.CheckFileExists = false;
+            ofd.CheckPathExists = true;
+            ofd.Title = "Select File";
+            ofd.FileName = "data.txt";
+            ofd.RestoreDirectory = true;
+            
+
+            Nullable<bool> result = ofd.ShowDialog();
+
+            if (result == true)
+            {
+                analyzer.FilePath = ofd.FileName;
+                PropertyChanged(this, new PropertyChangedEventArgs("FilePathVM"));
+            }
         }
     }
 }

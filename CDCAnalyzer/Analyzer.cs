@@ -18,17 +18,18 @@ namespace CDCAnalyzer
         public List<string> PortList { get; set; }
         public string SelectedPort { get;  set; }
         public bool ConnectionState { get; set; }
+        public string FilePath { get; set; }
+        public bool SaveFileEnabled { get; set; } 
 
-        public int CurrentSpeed { get; set; }
+        public float CurrentSpeed { get; set; }
         public float AverageSpeed { get; set; }
 
         private int LastReceivedCnt = 0;
         private DateTime FirstTimestamp;
         private DateTime LastTimestamp;
 
-        private byte[] SerialBuffer = new byte[1000000];
-        private int SerialCnt = 0;
-        private int SerialPos = 0;
+        private CircularBuffer<byte> circularBuffer;
+        private int WriteCnt = 0;
 
         private DispatcherTimer Timer;
 
@@ -40,6 +41,7 @@ namespace CDCAnalyzer
             ReceivedCnt = 0;
             PortList = SerialPort.GetPortNames().ToList<string>();
             ConnectionState = false;
+            FilePath = @"C:\Users\User\Desktop\data.txt";
 
             CurrentSpeed = 0;
             AverageSpeed = 0;
@@ -49,6 +51,8 @@ namespace CDCAnalyzer
             Timer.Tick += this.TimerTickHandler;
             Timer.Start();
 
+            circularBuffer = new CircularBuffer<byte>(10000000);
+           
         }
 
     public void ChangeConnectionState (bool state)
@@ -89,23 +93,41 @@ namespace CDCAnalyzer
                 FirstTimestamp = DateTime.Now;
             }
 
-            sp.Read(SerialBuffer, 0, cnt);
+            for (int i=0; i<cnt; i++)
+            {
+                circularBuffer.Enqueue( (byte) sp.ReadByte() );
+            }
+            //sp.Read(SerialBuffer, 0, cnt);
             
             ReceivedCnt += cnt;
+
+
 
             LastTimestamp = DateTime.Now;
 
             if (FirstTimestamp.Ticks != LastTimestamp.Ticks)
-                AverageSpeed = (ReceivedCnt) *  ((float) TimeSpan.TicksPerSecond / (LastTimestamp.Ticks - FirstTimestamp.Ticks));
+                AverageSpeed = (ReceivedCnt) *  ((float) TimeSpan.TicksPerSecond / (LastTimestamp.Ticks - FirstTimestamp.Ticks)) / 1000;
         }
 
         void TimerTickHandler(object sender, EventArgs e)
         {
             DispatcherTimer dt = (DispatcherTimer)sender;
 
-            CurrentSpeed = (ReceivedCnt - LastReceivedCnt) * 4;
+            CurrentSpeed = (float)(ReceivedCnt - LastReceivedCnt) * 4 / 1000;
 
             LastReceivedCnt = ReceivedCnt;
+
+            if (ConnectionState == true && SaveFileEnabled == true)
+            {
+                using (StreamWriter sw = new StreamWriter(FilePath, true, System.Text.Encoding.Default))
+                {
+                    for (int i = 0; i < ReceivedCnt - WriteCnt; i++)
+                    {
+                        sw.Write(string.Format("0x{0:X} ", circularBuffer.Dequeue()));
+                    }
+                    WriteCnt = ReceivedCnt;
+                }
+            }
         }
 
     }
