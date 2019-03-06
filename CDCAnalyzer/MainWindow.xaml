@@ -36,7 +36,8 @@
                 </Grid.ColumnDefinitions>
 
                 <ComboBox x:Name="ComboBox_PortList" Grid.Column="0" Margin="10" ItemsSource="{Binding PortListVM, Source={StaticResource AnalyzerVM}}"
-                            SelectedItem="{Binding SelectedPortVM, Source={StaticResource AnalyzerVM}, Mode=OneWayToSource }"/>
+                            SelectedItem="{Binding SelectedPortVM, Source={StaticResource AnalyzerVM}, Mode=OneWayToSource }"
+                            IsEnabled="{Binding ElementsEnabled, Source={StaticResource AnalyzerVM}}"/>
                 <!--<TextBox x:Name="TextBox_PortSpeed" Grid.Column="1" TextAlignment="Center" Margin="10,10,0,10" Text="{Binding Baud, Source={StaticResource AnalyzerVM}}"/>
                 <Label Content="Baud" Grid.Column="2" VerticalContentAlignment="Center" HorizontalContentAlignment="Left"/>-->
                 <Button x:Name="Button_Connect" Grid.Column="1" Margin="10" Command="{Binding ButtonConnect_Click, Source={StaticResource AnalyzerVM}}"

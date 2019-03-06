@@ -37,7 +37,7 @@ namespace CDCAnalyzer
         {
 
             ComPort = new SerialPort();
-            Baud = 115200;
+            Baud = 921600;
             ReceivedCnt = 0;
             PortList = SerialPort.GetPortNames().ToList<string>();
             ConnectionState = false;
@@ -55,7 +55,7 @@ namespace CDCAnalyzer
            
         }
 
-    public void ChangeConnectionState (bool state)
+        public void ChangeConnectionState (bool state)
         {
             if (ComPort.IsOpen == false && state == true && SelectedPort != null)
             {
@@ -87,36 +87,30 @@ namespace CDCAnalyzer
         {
             SerialPort sp = (SerialPort) sender;
             int cnt = sp.BytesToRead;
+            byte[] tmp_buf = new byte[cnt];
 
             if (FirstTimestamp.Ticks == 0)
             {
                 FirstTimestamp = DateTime.Now;
             }
 
-            for (int i=0; i<cnt; i++)
-            {
-                circularBuffer.Enqueue( (byte) sp.ReadByte() );
-            }
-            //sp.Read(SerialBuffer, 0, cnt);
-            
+            sp.Read(tmp_buf, 0, cnt);
+            circularBuffer.Enqueue(tmp_buf, cnt);
             ReceivedCnt += cnt;
-
-
-
+  
             LastTimestamp = DateTime.Now;
-
             if (FirstTimestamp.Ticks != LastTimestamp.Ticks)
-                AverageSpeed = (ReceivedCnt) *  ((float) TimeSpan.TicksPerSecond / (LastTimestamp.Ticks - FirstTimestamp.Ticks)) / 1000;
+                AverageSpeed = (ReceivedCnt) * ((float)TimeSpan.TicksPerSecond / (LastTimestamp.Ticks - FirstTimestamp.Ticks)) / 1000;
         }
 
         void TimerTickHandler(object sender, EventArgs e)
         {
             DispatcherTimer dt = (DispatcherTimer)sender;
 
+            PortList = SerialPort.GetPortNames().ToList<string>();
+
             CurrentSpeed = (float)(ReceivedCnt - LastReceivedCnt) * 4 / 1000;
-
             LastReceivedCnt = ReceivedCnt;
-
             if (ConnectionState == true && SaveFileEnabled == true)
             {
                 using (StreamWriter sw = new StreamWriter(FilePath, true, System.Text.Encoding.Default))

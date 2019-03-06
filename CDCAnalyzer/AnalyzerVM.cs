@@ -171,6 +171,7 @@ namespace CDCAnalyzer
             PropertyChanged(this, new PropertyChangedEventArgs("BytesReceivedVM"));
             PropertyChanged(this, new PropertyChangedEventArgs("CurrentSpeedVM"));
             PropertyChanged(this, new PropertyChangedEventArgs("AverageSpeedVM"));
+            PropertyChanged(this, new PropertyChangedEventArgs("PortListVM"));
         }
 
         public void ConnectRequest (object parameter)
