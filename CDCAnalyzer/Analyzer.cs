@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.IO.Ports;
 using System.Windows.Threading;
+using System.Text.RegularExpressions;
 
 namespace CDCAnalyzer
 {
@@ -41,7 +42,24 @@ namespace CDCAnalyzer
             ReceivedCnt = 0;
             PortList = SerialPort.GetPortNames().ToList<string>();
             ConnectionState = false;
-            FilePath = @"C:\Users\User\Desktop\data.txt";
+
+            FilePath = Directory.GetCurrentDirectory();
+            FilePath += @"\data";
+            if (!Directory.Exists(FilePath))
+            {
+                Directory.CreateDirectory(FilePath);
+            }
+
+            string FileName = @"\data_";
+            FileName += DateTime.Now.ToShortDateString();
+            FileName += @"_";
+            FileName += DateTime.Now.ToLongTimeString();
+            FileName = FileName.Replace(".", "");
+            FileName = FileName.Replace(":", "");
+            FileName += @".lci";
+
+            FilePath += FileName;
+            FilePath = FilePath.Replace(@"\\", @"\");
 
             CurrentSpeed = 0;
             AverageSpeed = 0;
@@ -108,19 +126,33 @@ namespace CDCAnalyzer
             DispatcherTimer dt = (DispatcherTimer)sender;
 
             PortList = SerialPort.GetPortNames().ToList<string>();
+            if (!PortList.Contains(ComPort.PortName) && ComPort.IsOpen)
+            {
+                ComPort.Close();
+                ComPort.DataReceived -= DataReceivedHandler;
+                ConnectionState = false;
+            }
 
             CurrentSpeed = (float)(ReceivedCnt - LastReceivedCnt) * 4 / 1000;
             LastReceivedCnt = ReceivedCnt;
-            if (ConnectionState == true && SaveFileEnabled == true)
+
+            if (ConnectionState == true && SaveFileEnabled == true && ReceivedCnt >= WriteCnt)
             {
-                using (StreamWriter sw = new StreamWriter(FilePath, true, System.Text.Encoding.Default))
+
+                using (FileStream fs = new FileStream(FilePath, FileMode.OpenOrCreate))
                 {
-                    for (int i = 0; i < ReceivedCnt - WriteCnt; i++)
+                    fs.Seek(0, SeekOrigin.End);
+                    while (ReceivedCnt > WriteCnt)
                     {
-                        sw.Write(string.Format("0x{0:X} ", circularBuffer.Dequeue()));
+                        fs.WriteByte(circularBuffer.Dequeue());
+                        WriteCnt++;
                     }
-                    WriteCnt = ReceivedCnt;
                 }
+            }
+            else if (ReceivedCnt == 0)
+            {
+                WriteCnt = 0;
+                FirstTimestamp = new DateTime();
             }
         }
 

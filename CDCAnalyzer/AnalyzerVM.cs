@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.IO.Ports;
+using System.IO;
 
 namespace CDCAnalyzer
 {
@@ -172,6 +173,7 @@ namespace CDCAnalyzer
             PropertyChanged(this, new PropertyChangedEventArgs("CurrentSpeedVM"));
             PropertyChanged(this, new PropertyChangedEventArgs("AverageSpeedVM"));
             PropertyChanged(this, new PropertyChangedEventArgs("PortListVM"));
+            PropertyChanged(this, new PropertyChangedEventArgs("ConnectionStateVM"));
         }
 
         public void ConnectRequest (object parameter)
@@ -192,6 +194,21 @@ namespace CDCAnalyzer
             analyzer.AverageSpeed = 0;
             analyzer.CurrentSpeed = 0;
             analyzer.ReceivedCnt = 0;
+
+            analyzer.FilePath = Path.GetDirectoryName(analyzer.FilePath);
+
+            string FileName = @"\data_";
+            FileName += DateTime.Now.ToShortDateString();
+            FileName += @"_";
+            FileName += DateTime.Now.ToLongTimeString();
+            FileName = FileName.Replace(".", "");
+            FileName = FileName.Replace(":", "");
+            FileName += @".lci";
+
+            analyzer.FilePath += FileName;
+            analyzer.FilePath = analyzer.FilePath.Replace(@"\\", @"\");
+
+            PropertyChanged(this, new PropertyChangedEventArgs("FilePathVM"));
         }
 
         public void SelectFileRequest (object parameter)
@@ -204,7 +221,7 @@ namespace CDCAnalyzer
             ofd.CheckFileExists = false;
             ofd.CheckPathExists = true;
             ofd.Title = "Select File";
-            ofd.FileName = "data.txt";
+            ofd.FileName = "data.lci";
             ofd.RestoreDirectory = true;
             
 

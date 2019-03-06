@@ -63,8 +63,20 @@ namespace CDCAnalyzer
 
                 T[] dequeued = new T[cnt];
 
-                Array.ConstrainedCopy(_buffer, _tail - cnt, dequeued, 0, cnt);
-                _tail = NextPosition(_tail, cnt);
+                if (_bufferSize - _tail > cnt)
+                {
+                    Array.ConstrainedCopy(_buffer, _tail, dequeued, 0, cnt);
+                    _tail = NextPosition(_tail, cnt);
+                }
+                else
+                {
+                    int cnt_to_end = _bufferSize - _tail;
+                    Array.ConstrainedCopy(_buffer, _tail, dequeued, 0, cnt_to_end);
+                    _tail = NextPosition(_tail, cnt_to_end);
+                    Array.ConstrainedCopy(_buffer, _tail, dequeued, cnt_to_end, cnt - cnt_to_end);
+                    _tail = NextPosition(_tail, cnt - cnt_to_end);
+                }
+                
                 _length -= cnt;
                 return dequeued;
             }
